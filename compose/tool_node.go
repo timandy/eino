@@ -23,6 +23,8 @@ import (
 	"runtime/debug"
 	"sync"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components"
 	"github.com/cloudwego/eino/components/tool"
@@ -763,7 +765,11 @@ func parallelRunToolCall(ctx context.Context,
 			continue
 		}
 		wg.Add(1)
-		go func(ctx_ context.Context, t *toolCallTask, opts ...tool.Option) {
+
+		ctx_ := ctx
+		t := &tasks[i]
+		opts := opts
+		routine.Go(func() {
 			defer wg.Done()
 			defer func() {
 				panicErr := recover()
@@ -772,7 +778,7 @@ func parallelRunToolCall(ctx context.Context,
 				}
 			}()
 			run(ctx_, t, opts...)
-		}(ctx, &tasks[i], opts...)
+		})
 	}
 
 	if !tasks[0].executed {

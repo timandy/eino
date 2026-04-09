@@ -19,6 +19,8 @@ package planexecute
 import (
 	"context"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/adk"
 )
 
@@ -32,7 +34,7 @@ func (o *outputSessionKVsAgent) Run(ctx context.Context, input *adk.AgentInput,
 	iterator, generator := adk.NewAsyncIteratorPair[*adk.AgentEvent]()
 
 	iterator_ := o.Agent.Run(ctx, input, options...)
-	go func() {
+	routine.Go(func() {
 		defer generator.Close()
 		for {
 			event, ok := iterator_.Next()
@@ -48,7 +50,7 @@ func (o *outputSessionKVsAgent) Run(ctx context.Context, input *adk.AgentInput,
 			Output: &adk.AgentOutput{CustomizedOutput: kvs},
 		}
 		generator.Send(event)
-	}()
+	})
 
 	return iterator
 }

@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/bmatcuk/doublestar/v4"
+	"github.com/timandy/routine"
 )
 
 type fileEntry struct {
@@ -262,7 +263,8 @@ func (b *InMemoryBackend) grepFilesInParallel(filteredFiles []string, re *regexp
 	var wg sync.WaitGroup
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go func(workerID int) {
+		workerID := i
+		routine.Go(func() {
 			defer wg.Done()
 			defer func() {
 				if r := recover(); r != nil {
@@ -277,7 +279,7 @@ func (b *InMemoryBackend) grepFilesInParallel(filteredFiles []string, re *regexp
 					results <- fileMatches
 				}
 			}
-		}(i)
+		})
 	}
 
 	for _, filePath := range filteredFiles {
@@ -289,11 +291,11 @@ func (b *InMemoryBackend) grepFilesInParallel(filteredFiles []string, re *regexp
 	}
 	close(tasks)
 
-	go func() {
+	routine.Go(func() {
 		wg.Wait()
 		close(results)
 		close(errChan)
-	}()
+	})
 
 	var allMatches []GrepMatch
 	var errs []error

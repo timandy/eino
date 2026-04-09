@@ -27,6 +27,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/filesystem"
 	"github.com/cloudwego/eino/adk/internal"
@@ -840,7 +842,7 @@ func newStreamingExecuteTool(sb filesystem.StreamingShell, name string, desc str
 			return nil, err
 		}
 		sr, sw := schema.Pipe[string](10)
-		go func() {
+		routine.Go(func() {
 			defer func() {
 				e := recover()
 				if e != nil {
@@ -887,7 +889,7 @@ func newStreamingExecuteTool(sb filesystem.StreamingShell, name string, desc str
 			} else if !hasSentContent {
 				sw.Send("[Command executed successfully with no output]", nil)
 			}
-		}()
+		})
 
 		return sr, nil
 	})

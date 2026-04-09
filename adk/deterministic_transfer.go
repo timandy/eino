@@ -25,6 +25,7 @@ import (
 	"github.com/cloudwego/eino/components"
 	"github.com/cloudwego/eino/internal/safe"
 	"github.com/cloudwego/eino/schema"
+	"github.com/timandy/routine"
 )
 
 func init() {
@@ -79,7 +80,9 @@ func (a *agentWithDeterministicTransferTo) Run(ctx context.Context,
 	aIter := a.agent.Run(ctx, input, options...)
 
 	iterator, generator := NewAsyncIteratorPair[*AgentEvent]()
-	go forwardEventsAndAppendTransfer(aIter, generator, a.toAgentNames)
+	routine.Go(func() {
+		forwardEventsAndAppendTransfer(aIter, generator, a.toAgentNames)
+	})
 
 	return iterator
 }
@@ -114,7 +117,9 @@ func (a *resumableAgentWithDeterministicTransferTo) Run(ctx context.Context,
 	aIter := a.agent.Run(ctx, input, options...)
 
 	iterator, generator := NewAsyncIteratorPair[*AgentEvent]()
-	go forwardEventsAndAppendTransfer(aIter, generator, a.toAgentNames)
+	routine.Go(func() {
+		forwardEventsAndAppendTransfer(aIter, generator, a.toAgentNames)
+	})
 
 	return iterator
 }
@@ -127,7 +132,9 @@ func (a *resumableAgentWithDeterministicTransferTo) Resume(ctx context.Context, 
 	aIter := a.agent.Resume(ctx, info, opts...)
 
 	iterator, generator := NewAsyncIteratorPair[*AgentEvent]()
-	go forwardEventsAndAppendTransfer(aIter, generator, a.toAgentNames)
+	routine.Go(func() {
+		forwardEventsAndAppendTransfer(aIter, generator, a.toAgentNames)
+	})
 
 	return iterator
 }
@@ -185,7 +192,9 @@ func runFlowAgentWithIsolatedSession(ctx context.Context, fa *flowAgent, input *
 	iter := fa.Run(ctx, input, options...)
 
 	iterator, generator := NewAsyncIteratorPair[*AgentEvent]()
-	go handleFlowAgentEvents(ctx, iter, generator, isolatedSession, parentSession, toAgentNames)
+	routine.Go(func() {
+		handleFlowAgentEvents(ctx, iter, generator, isolatedSession, parentSession, toAgentNames)
+	})
 
 	return iterator
 }
@@ -222,7 +231,9 @@ func resumeFlowAgentWithIsolatedSession(ctx context.Context, fa *flowAgent, info
 	iter := fa.Resume(ctx, info, opts...)
 
 	iterator, generator := NewAsyncIteratorPair[*AgentEvent]()
-	go handleFlowAgentEvents(ctx, iter, generator, isolatedSession, parentSession, toAgentNames)
+	routine.Go(func() {
+		handleFlowAgentEvents(ctx, iter, generator, isolatedSession, parentSession, toAgentNames)
+	})
 
 	return iterator
 }

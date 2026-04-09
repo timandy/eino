@@ -22,6 +22,8 @@ import (
 	"runtime/debug"
 	"sync"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/internal/core"
 	"github.com/cloudwego/eino/internal/safe"
 	"github.com/cloudwego/eino/schema"
@@ -70,7 +72,7 @@ func (a *workflowAgent) GetType() string {
 func (a *workflowAgent) Run(ctx context.Context, _ *AgentInput, opts ...AgentRunOption) *AsyncIterator[*AgentEvent] {
 	iterator, generator := NewAsyncIteratorPair[*AgentEvent]()
 
-	go func() {
+	routine.Go(func() {
 
 		var err error
 		defer func() {
@@ -96,7 +98,7 @@ func (a *workflowAgent) Run(ctx context.Context, _ *AgentInput, opts ...AgentRun
 		default:
 			err = fmt.Errorf("unsupported workflow agent mode: %d", a.mode)
 		}
-	}()
+	})
 
 	return iterator
 }
@@ -123,7 +125,7 @@ func init() {
 func (a *workflowAgent) Resume(ctx context.Context, info *ResumeInfo, opts ...AgentRunOption) *AsyncIterator[*AgentEvent] {
 	iterator, generator := NewAsyncIteratorPair[*AgentEvent]()
 
-	go func() {
+	routine.Go(func() {
 		var err error
 		defer func() {
 			panicErr := recover()
@@ -153,7 +155,7 @@ func (a *workflowAgent) Resume(ctx context.Context, info *ResumeInfo, opts ...Ag
 		default:
 			err = fmt.Errorf("unsupported workflow agent state type: %T", s)
 		}
-	}()
+	})
 	return iterator
 }
 
@@ -470,7 +472,9 @@ func (a *workflowAgent) runParallel(ctx context.Context, generator *AsyncGenerat
 
 	for i := range a.subAgents {
 		wg.Add(1)
-		go func(idx int, agent *flowAgent) {
+		idx := i
+		agent := a.subAgents[i]
+		routine.Go(func() {
 			defer func() {
 				panicErr := recover()
 				if panicErr != nil {
@@ -510,7 +514,7 @@ func (a *workflowAgent) runParallel(ctx context.Context, generator *AsyncGenerat
 				}
 				generator.Send(event)
 			}
-		}(i, a.subAgents[i])
+		})
 	}
 
 	wg.Wait()

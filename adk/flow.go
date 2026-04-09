@@ -24,6 +24,8 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/compose"
 	icb "github.com/cloudwego/eino/internal/callbacks"
@@ -365,7 +367,9 @@ func (a *flowAgent) Run(ctx context.Context, input *AgentInput, opts ...AgentRun
 
 	iterator, generator := NewAsyncIteratorPair[*AgentEvent]()
 
-	go a.run(ctx, ctxForSubAgents, runCtx, aIter, generator, opts...)
+	routine.Go(func() {
+		a.run(ctx, ctxForSubAgents, runCtx, aIter, generator, opts...)
+	})
 
 	return iterator
 }
@@ -396,7 +400,9 @@ func (a *flowAgent) Resume(ctx context.Context, info *ResumeInfo, opts ...AgentR
 			return wrapIterWithOnEnd(ctx, aIter)
 		}
 		aIter := ra.Resume(ctx, info, opts...)
-		go a.run(ctx, ctxForSubAgents, getRunCtx(ctxForSubAgents), aIter, generator, opts...)
+		routine.Go(func() {
+			a.run(ctx, ctxForSubAgents, getRunCtx(ctxForSubAgents), aIter, generator, opts...)
+		})
 		return iterator
 	}
 
@@ -554,7 +560,7 @@ func wrapIterWithOnEnd(ctx context.Context, iter *AsyncIterator[*AgentEvent]) *A
 	icb.On(ctx, cbOutput, icb.BuildOnEndHandleWithCopy(copyAgentCallbackOutput), callbacks.TimingOnEnd, false)
 
 	outIter, outGen := NewAsyncIteratorPair[*AgentEvent]()
-	go func() {
+	routine.Go(func() {
 		defer func() {
 			cbGen.Close()
 			outGen.Close()
@@ -568,6 +574,6 @@ func wrapIterWithOnEnd(ctx context.Context, iter *AsyncIterator[*AgentEvent]) *A
 			cbGen.Send(copied)
 			outGen.Send(event)
 		}
-	}()
+	})
 	return outIter
 }

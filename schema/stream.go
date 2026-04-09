@@ -26,6 +26,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/internal/safe"
 )
 
@@ -710,7 +712,7 @@ type reader[T any] interface {
 func toStream[T any, Reader reader[T]](r Reader) *stream[T] {
 	ret := newStream[T](5)
 
-	go func() {
+	routine.Go(func() {
 		defer func() {
 			panicErr := recover()
 			if panicErr != nil {
@@ -735,7 +737,7 @@ func toStream[T any, Reader reader[T]](r Reader) *stream[T] {
 				break
 			}
 		}
-	}()
+	})
 
 	return ret
 }

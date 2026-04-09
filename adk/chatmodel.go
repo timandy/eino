@@ -28,6 +28,7 @@ import (
 	"sync/atomic"
 
 	"github.com/bytedance/sonic"
+	"github.com/timandy/routine"
 
 	"github.com/cloudwego/eino/adk/internal"
 	"github.com/cloudwego/eino/components/model"
@@ -952,10 +953,10 @@ func (a *ChatModelAgent) Run(ctx context.Context, input *AgentInput, opts ...Age
 
 	ctx, run, bc, err := a.getRunFunc(ctx)
 	if err != nil {
-		go func() {
+		routine.Go(func() {
 			generator.Send(&AgentEvent{Err: err})
 			generator.Close()
-		}()
+		})
 		return iterator
 	}
 
@@ -969,7 +970,7 @@ func (a *ChatModelAgent) Run(ctx context.Context, input *AgentInput, opts ...Age
 		}
 	}
 
-	go func() {
+	routine.Go(func() {
 		defer func() {
 			panicErr := recover()
 			if panicErr != nil {
@@ -991,7 +992,7 @@ func (a *ChatModelAgent) Run(ctx context.Context, input *AgentInput, opts ...Age
 		}
 
 		run(ctx, input, generator, newBridgeStore(), instruction, returnDirectly, co...)
-	}()
+	})
 
 	return iterator
 }
@@ -1001,10 +1002,10 @@ func (a *ChatModelAgent) Resume(ctx context.Context, info *ResumeInfo, opts ...A
 
 	ctx, run, bc, err := a.getRunFunc(ctx)
 	if err != nil {
-		go func() {
+		routine.Go(func() {
 			generator.Send(&AgentEvent{Err: err})
 			generator.Close()
-		}()
+		})
 		return iterator
 	}
 
@@ -1036,10 +1037,10 @@ func (a *ChatModelAgent) Resume(ctx context.Context, info *ResumeInfo, opts ...A
 	// The result is re-encoded so the resume path always operates on the current *State.
 	stateByte, err = preprocessComposeCheckpoint(stateByte)
 	if err != nil {
-		go func() {
+		routine.Go(func() {
 			generator.Send(&AgentEvent{Err: err})
 			generator.Close()
-		}()
+		})
 		return iterator
 	}
 
@@ -1064,7 +1065,7 @@ func (a *ChatModelAgent) Resume(ctx context.Context, info *ResumeInfo, opts ...A
 		}))
 	}
 
-	go func() {
+	routine.Go(func() {
 		defer func() {
 			panicErr := recover()
 			if panicErr != nil {
@@ -1087,7 +1088,7 @@ func (a *ChatModelAgent) Resume(ctx context.Context, info *ResumeInfo, opts ...A
 
 		run(ctx, &AgentInput{EnableStreaming: info.EnableStreaming}, generator,
 			newResumeBridgeStore(stateByte), instruction, returnDirectly, co...)
-	}()
+	})
 
 	return iterator
 }

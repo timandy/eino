@@ -22,6 +22,8 @@ import (
 	"runtime/debug"
 	"sync"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/internal/core"
 	"github.com/cloudwego/eino/internal/safe"
 	"github.com/cloudwego/eino/schema"
@@ -94,7 +96,9 @@ func (r *Runner) Run(ctx context.Context, messages []Message,
 
 	niter, gen := NewAsyncIteratorPair[*AgentEvent]()
 
-	go r.handleIter(ctx, iter, gen, o.checkPointID)
+	routine.Go(func() {
+		r.handleIter(ctx, iter, gen, o.checkPointID)
+	})
 	return niter
 }
 
@@ -181,8 +185,9 @@ func (r *Runner) resume(ctx context.Context, checkPointID string, resumeData map
 	}
 
 	niter, gen := NewAsyncIteratorPair[*AgentEvent]()
-
-	go r.handleIter(ctx, aIter, gen, &checkPointID)
+	routine.Go(func() {
+		r.handleIter(ctx, aIter, gen, &checkPointID)
+	})
 	return niter, nil
 }
 

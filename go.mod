@@ -11,6 +11,7 @@ require (
 	github.com/slongfield/pyfmt v0.0.0-20220222012616-ea85ff4c361f
 	github.com/smartystreets/goconvey v1.8.1
 	github.com/stretchr/testify v1.10.0
+	github.com/timandy/routine v1.1.6
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	go.uber.org/mock v0.4.0
 	gopkg.in/yaml.v3 v3.0.1

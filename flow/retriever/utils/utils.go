@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components"
 	"github.com/cloudwego/eino/components/retriever"
@@ -45,7 +47,9 @@ func ConcurrentRetrieveWithCallback(ctx context.Context, tasks []*RetrieveTask) 
 	wg := sync.WaitGroup{}
 	for i := range tasks {
 		wg.Add(1)
-		go func(ctx context.Context, t *RetrieveTask) {
+		ctx := ctx
+		t := tasks[i]
+		routine.Go(func() {
 			ctx = ctxWithRetrieverRunInfo(ctx, t.Retriever)
 
 			defer func() {
@@ -66,7 +70,7 @@ func ConcurrentRetrieveWithCallback(ctx context.Context, tasks []*RetrieveTask) 
 
 			callbacks.OnEnd(ctx, docs)
 			t.Result = docs
-		}(ctx, tasks[i])
+		})
 	}
 	wg.Wait()
 }

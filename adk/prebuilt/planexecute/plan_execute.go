@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/timandy/routine"
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/model"
@@ -328,7 +329,7 @@ func (p *planner) Run(ctx context.Context, input *adk.AgentInput,
 
 	adk.AddSessionValue(ctx, UserInputSessionKey, input.Messages)
 
-	go func() {
+	routine.Go(func() {
 		defer func() {
 			panicErr := recover()
 			if panicErr != nil {
@@ -422,7 +423,7 @@ func (p *planner) Run(ctx context.Context, input *adk.AgentInput,
 			generator.Send(&adk.AgentEvent{Err: err})
 			return
 		}
-	}()
+	})
 
 	return iterator
 }
@@ -696,7 +697,7 @@ func (r *replanner) genInput(ctx context.Context) ([]adk.Message, error) {
 func (r *replanner) Run(ctx context.Context, input *adk.AgentInput, _ ...adk.AgentRunOption) *adk.AsyncIterator[*adk.AgentEvent] {
 	iterator, generator := adk.NewAsyncIteratorPair[*adk.AgentEvent]()
 
-	go func() {
+	routine.Go(func() {
 		defer func() {
 			panicErr := recover()
 			if panicErr != nil {
@@ -776,7 +777,7 @@ func (r *replanner) Run(ctx context.Context, input *adk.AgentInput, _ ...adk.Age
 			generator.Send(&adk.AgentEvent{Err: err})
 			return
 		}
-	}()
+	})
 
 	return iterator
 }

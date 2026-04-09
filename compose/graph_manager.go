@@ -22,6 +22,8 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/internal"
 	"github.com/cloudwego/eino/internal/safe"
 )
@@ -341,7 +343,10 @@ func (t *taskManager) submit(tasks []*task) error {
 	}
 	for _, currentTask := range tasks {
 		t.num += 1
-		go t.execute(currentTask)
+		ct := currentTask
+		routine.Go(func() {
+			t.execute(ct)
+		})
 	}
 	if syncTask != nil {
 		t.num += 1
@@ -461,10 +466,10 @@ func receiveWithDeadline(recv func() (*task, bool), deadline time.Time) (ta *tas
 
 	resultCh := make(chan struct{}, 1)
 
-	go func() {
+	routine.Go(func() {
 		ta, closed = recv()
 		resultCh <- struct{}{}
-	}()
+	})
 
 	timeoutCh := time.After(timeout)
 
@@ -486,10 +491,10 @@ func receiveWithListening(recv func() (*task, bool), cancel chan *time.Duration)
 
 	var deadline *time.Time
 	canceled := false
-	go func() {
+	routine.Go(func() {
 		ta, closed := recv()
 		resultCh <- pair{ta, closed}
-	}()
+	})
 
 	select {
 	case p := <-resultCh:

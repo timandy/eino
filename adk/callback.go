@@ -22,6 +22,7 @@ import (
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components"
 	icb "github.com/cloudwego/eino/internal/callbacks"
+	"github.com/timandy/routine"
 )
 
 // AgentCallbackInput represents the input passed to agent callbacks during OnStart.
@@ -57,7 +58,7 @@ func copyEventIterator(iter *AsyncIterator[*AgentEvent], n int) []*AsyncIterator
 		iterators[i], generators[i] = NewAsyncIteratorPair[*AgentEvent]()
 	}
 
-	go func() {
+	routine.Go(func() {
 		defer func() {
 			for _, g := range generators {
 				g.Close()
@@ -74,7 +75,7 @@ func copyEventIterator(iter *AsyncIterator[*AgentEvent], n int) []*AsyncIterator
 			}
 			generators[n-1].Send(event)
 		}
-	}()
+	})
 
 	return iterators
 }

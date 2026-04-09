@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/timandy/routine"
+
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/flow/agent"
@@ -59,7 +61,7 @@ func ConvertCallbackHandlers(handlers ...MultiAgentCallback) callbacks.Handler {
 	}
 
 	onChatModelEndWithStreamOutput := func(ctx context.Context, info *callbacks.RunInfo, output *schema.StreamReader[*model.CallbackOutput]) context.Context {
-		go func() {
+		routine.Go(func() {
 			msg, err := schema.ConcatMessageStream(schema.StreamReaderWithConvert(output,
 				func(m *model.CallbackOutput) (*schema.Message, error) {
 					return m.Message, nil
@@ -77,7 +79,7 @@ func ConvertCallbackHandlers(handlers ...MultiAgentCallback) callbacks.Handler {
 					})
 				}
 			}
-		}()
+		})
 
 		return ctx
 	}
